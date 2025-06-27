@@ -1,0 +1,159 @@
+which satellite is above you
+import requests
+
+API_KEY = 'your key'
+LAT = 19.075975
+LON = 72.877377
+ALT = 10
+RADIUS = 70
+CATEGORY = 0
+
+# === API URL ===
+url = f'https://api.n2yo.com/rest/v1/satellite/above/{LAT}/{LON}/{ALT}/{RADIUS}/{CATEGORY}/?apiKey={API_KEY}'
+
+try:
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    data = response.json()
+    satellites = data.get("above", [])
+
+    if satellites:
+        print(f"\n🛰 Satellites currently above you (Lat: {LAT}, Lon: {LON}):\n")
+        for sat in satellites:
+            print(f"Name       : {sat.get('satname')}")
+            print(f"NORAD ID   : {sat.get('satid')}")
+            print(f"Launch Date: {sat.get('launchDate')}")
+
+            line1 = sat.get('line1')
+            line2 = sat.get('line2')
+
+            if line1:
+                print(f"Line 1     : {line1[:50]}...")
+            else:
+                print("Line 1     : N/A")
+
+            if line2:
+                print(f"Line 2     : {line2[:50]}...")
+            else:
+                print("Line 2     : N/A")
+
+            print("-" * 40)
+    else:
+        print("🚫 No satellites found above your location right now.")
+
+except requests.exceptions.RequestException as e:
+    print("❌ Error contacting N2YO API:", e)
+
+
+
+live tracker of international space 
+
+import requests
+import math
+
+
+API_KEY = 'your key'
+MY_LAT = 20.075975
+MY_LON = 72.877377
+ALT = 10
+DURATION = 1  # seconds (just get current position)
+
+# === ISS NORAD ID ===
+ISS_ID = 25544
+
+# === API URL ===
+url = f'https://api.n2yo.com/rest/v1/satellite/positions/{ISS_ID}/{MY_LAT}/{MY_LON}/{ALT}/{DURATION}/?apiKey={API_KEY}'
+
+# === Distance Calculation (Haversine) ===
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371  # km
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+
+    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return R * c  # in kilometers
+
+try:
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    data = response.json()
+
+    position = data['positions'][0]
+    iss_lat = position['satlatitude']
+    iss_lon = position['satlongitude']
+    iss_alt = position['sataltitude']
+
+    distance = haversine(MY_LAT, MY_LON, iss_lat, iss_lon)
+
+    print("\n🛰️ International Space Station Tracker")
+    print(f"📍 ISS Latitude : {iss_lat:.4f}")
+    print(f"📍 ISS Longitude: {iss_lon:.4f}")
+    print(f"🧭 ISS Altitude : {iss_alt:.2f} km")
+    print(f"📏 Distance from you (Mumbai): {distance:.2f} km")
+    print("-" * 50)
+
+except requests.exceptions.RequestException as e:
+    print("❌ Error contacting N2YO API:", e)
+
+with realtime map integration
+
+
+import requests
+import folium
+import time
+import webbrowser
+
+# === Your Info ===
+API_KEY = 'your key'
+MY_LAT = 19.075975
+MY_LON = 72.877377
+ALT = 10
+ISS_ID = 25544
+DURATION = 1
+
+
+MAP_FILE = "iss_tracker_map.html"
+
+
+def get_iss_position():
+    url = f'https://api.n2yo.com/rest/v1/satellite/positions/{ISS_ID}/{MY_LAT}/{MY_LON}/{ALT}/{DURATION}/?apiKey={API_KEY}'
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        position = response.json()['positions'][0]
+        return position['satlatitude'], position['satlongitude']
+    except Exception as e:
+        print("❌ Error getting ISS position:", e)
+        return None, None
+
+# === Show Real-Time Map with ISS ===
+def track_iss():
+    first_time = True
+    while True:
+        lat,  = get_iss_position()
+        if lat is None:
+            break
+
+        print(f"🛰 ISS Position: Lat {lat:.4f}, Lon {lon:.4f}")
+
+        m = folium.Map(location=[lat, lon], zoom_start=3)
+        folium.Marker(
+            [lat, lon],
+            icon=folium.Icon(color='red', icon='rocket', prefix='fa'),
+            popup="🚀 ISS"
+        ).add_to(m)
+        m.save(MAP_FILE)
+
+        if first_time:
+            webbrowser.open(MAP_FILE)
+            first_time = False
+
+        time.sleep(10)  # Update every 10 seconds
+
+# === Run the Tracker ===
+track_iss()
+
