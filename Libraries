@@ -1,0 +1,7 @@
+pip install streamlit
+pip install requests
+pip install folium
+pip install streamlit-folium
+pip install pandas
+pip install pydeck
+pip install altair
