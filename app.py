@@ -8,7 +8,7 @@ from math import radians, cos, sin, sqrt, atan2
 import altair as alt
 
 
-# === CONFIG ===
+ === CONFIG ===
 API_KEY = 'Your Key'
 MY_LAT = 0.0
 MY_LON = 0.0
@@ -17,7 +17,7 @@ DURATION = 1
 ISS_ID = 25544
 
 
-# === INIT STREAMLIT ===
+ === INIT STREAMLIT ===
 st.set_page_config(page_title="Static ISS Tracker", layout="wide")
 
 
@@ -69,7 +69,7 @@ if 'speeds' not in st.session_state:
     st.session_state.speeds = []
 
 
-# === Utility: Haversine Distance ===
+
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371
     dlat = radians(lat2 - lat1)
@@ -78,7 +78,7 @@ def haversine(lat1, lon1, lat2, lon2):
     return R * 2 * atan2(sqrt(a), sqrt(1 - a))
 
 
-# === Fetch ISS Position ===
+ === Fetch ISS Position ===
 def get_iss_position():
     url = f"https://api.n2yo.com/rest/v1/satellite/positions/{ISS_ID}/{MY_LAT}/{MY_LON}/{ALT}/{DURATION}/?apiKey={API_KEY}"
     response = requests.get(url)
@@ -87,18 +87,18 @@ def get_iss_position():
     return pos['satlatitude'], pos['satlongitude'], pos['sataltitude']
 
 
-# === Fetch TLE for sunlight check ===
+ === Fetch TLE for sunlight check ===
 def get_tle_status():
     tle_url = f"https://api.n2yo.com/rest/v1/satellite/tle/{ISS_ID}?apiKey={API_KEY}"
     tle_data = requests.get(tle_url).json()
     return tle_data.get('info', {}).get('satname', None)
 
 
-# === Refresh Button ===
+ === Refresh Button ===
 if st.button("🔁 Fetch Latest ISS Position"):
     try:
         lat, lon, altitude = get_iss_position()
-        st.success(f"📍 ISS → Lat: {lat:.2f}, Lon: {lon:.2f}, Alt: {altitude:.2f} km")
+        st.success(f" ISS → Lat: {lat:.2f}, Lon: {lon:.2f}, Alt: {altitude:.2f} km")
 
 
         st.session_state.full_path.append((lat, lon))
@@ -142,14 +142,14 @@ if st.button("🔁 Fetch Latest ISS Position"):
 
 
         if get_tle_status():
-            st.success("☀️ ISS is likely in sunlight")
+            st.success(" ISS is likely in sunlight")
 
 
     except Exception as e:
         st.error(f"❌ Error fetching ISS data: {e}")
 
 
-# === DISPLAY MAP AND INFO SIDE-BY-SIDE ===
+ === DISPLAY MAP AND INFO SIDE BY SIDE ===
 if st.session_state.trail:
     lat, lon = st.session_state.trail[-1]
     altitude = st.session_state.altitudes[-1]
@@ -159,9 +159,9 @@ if st.session_state.trail:
 
     col1, col2 = st.columns([2, 1])
     with col1:
-        st.subheader("🗺️ ISS Map View")
+        st.subheader(" ISS Map View")
         m = folium.Map(location=[lat, lon], zoom_start=3, tiles='CartoDB dark_matter')
-        folium.Marker([lat, lon], popup=f"🚀 ISS\nLat: {lat:.2f}, Lon: {lon:.2f}, Alt: {altitude:.2f} km",
+        folium.Marker([lat, lon], popup=f" ISS\nLat: {lat:.2f}, Lon: {lon:.2f}, Alt: {altitude:.2f} km",
                       icon=folium.Icon(color="red", icon="rocket", prefix='fa')).add_to(m)
         folium.PolyLine(st.session_state.full_path, color='lightblue', weight=1.5, opacity=0.5).add_to(m)
         folium.PolyLine(st.session_state.trail, color='orange', weight=3, opacity=0.9).add_to(m)
@@ -171,12 +171,12 @@ if st.session_state.trail:
 
 
     with col2:
-        st.subheader("📦 ISS Details")
-        st.metric(label="📍 Latitude", value=f"{lat:.2f}")
-        st.metric(label="📍 Longitude", value=f"{lon:.2f}")
-        st.metric(label="📏 Distance from Mumbai", value=f"{dist:.2f} km")
-        st.metric(label="🚁 Altitude", value=f"{altitude:.2f} km")
-        st.metric(label="💨 Speed", value=f"{speed:.2f} km/h")
+        st.subheader("ISS Details")
+        st.metric(label=" Latitude", value=f"{lat:.2f}")
+        st.metric(label=" Longitude", value=f"{lon:.2f}")
+        st.metric(label=" Distance from Mumbai", value=f"{dist:.2f} km")
+        st.metric(label=" Altitude", value=f"{altitude:.2f} km")
+        st.metric(label=" Speed", value=f"{speed:.2f} km/h")
 
 
         st.markdown("\n---\n")
@@ -185,7 +185,7 @@ if st.session_state.trail:
         st.download_button("⬇️ Download CSV", trail_df.to_csv(index=False), "iss_trail.csv", "text/csv")
 
 
-    st.subheader("📊 Altitude Over Time")
+    st.subheader("Altitude Over Time")
     df_alt = pd.DataFrame({
         'Time': [t.strftime("%H:%M:%S") for t in st.session_state.timestamps],
         'Altitude (km)': st.session_state.altitudes
@@ -198,7 +198,7 @@ if st.session_state.trail:
     st.altair_chart(chart_alt, use_container_width=True)
 
 
-    st.subheader("⚡ Speed Over Time")
+    st.subheader("Speed Over Time")
     df_speed = pd.DataFrame({
         'Time': [t.strftime("%H:%M:%S") for t in st.session_state.timestamps],
         'Speed (km/h)': st.session_state.speeds
@@ -211,7 +211,7 @@ if st.session_state.trail:
     st.altair_chart(chart_speed, use_container_width=True)
 
 
-    with st.expander("🔭 Upcoming Visible Passes Over Mumbai"):
+    with st.expander(" Upcoming Visible Passes Over Mumbai"):
         try:
             passes_url = f"https://api.n2yo.com/rest/v1/satellite/visualpasses/{ISS_ID}/{MY_LAT}/{MY_LON}/10/5/300/&apiKey={API_KEY}"
             passes = requests.get(passes_url).json().get('passes', [])
@@ -221,7 +221,7 @@ if st.session_state.trail:
                 for p in passes:
                     start = datetime.utcfromtimestamp(p['startUTC']).strftime("%Y-%m-%d %H:%M UTC")
                     duration = p['duration']
-                    st.write(f"📅 {start} for ⏱️ {duration} seconds")
+                    st.write(f" {start} for  {duration} seconds")
         except:
             st.warning("Couldn't fetch visible pass data.")
 else:
